@@ -134,7 +134,7 @@
             display: flex;
             overflow-x: auto;
             scroll-snap-type: x mandatory;
-            gap: 12px;
+            gap: 15px; /* Espacio entre fotos */
             padding: 10px;
             transform: translateX(-50%);
             -ms-overflow-style: none;  
@@ -146,13 +146,62 @@
 
         .carrusel-item {
             scroll-snap-align: center;
-            flex: 0 0 150px; /* Ancho ajustado para no tapar los bordes */
-            height: 180px;   /* Altura ajustada */
+            flex: 0 0 120px; /* Fotos más angostas */
+            height: 170px;   /* Fotos más altas (rectángulo vertical) */
             border-radius: 12px;
             border: 3px solid var(--color-rosado-claro);
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
             object-fit: cover; 
             background-color: #fcecf0;
+            cursor: pointer; /* Cursor de mano para indicar que es táctil */
+            transition: transform 0.2s ease;
+        }
+
+        .carrusel-item:active {
+            transform: scale(0.95);
+        }
+
+        /* ==========================================
+           VISOR DE FOTOS (LIGHTBOX)
+           ========================================== */
+        .lightbox {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease;
+        }
+        .lightbox.activo {
+            opacity: 1;
+            visibility: visible;
+        }
+        .lightbox img {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 10px;
+            box-shadow: 0 0 25px rgba(0,0,0,0.8);
+            border: 3px solid var(--color-rosado-claro);
+            object-fit: contain;
+        }
+        .lightbox-cerrar {
+            position: absolute;
+            top: 25px;
+            right: 30px;
+            font-size: 45px;
+            color: white;
+            cursor: pointer;
+            line-height: 1;
+            font-family: sans-serif;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            z-index: 10000;
         }
 
         /* ==========================================
@@ -236,7 +285,8 @@
         <!-- IMAGEN 3: CARRUSEL DE FOTOS -->
         <div class="seccion">
             <img src="IMAGEN3.png" alt="Mis Recuerdos">
-            <div class="carrusel-contenedor" style="top: 80%; left: 50%; width: 85%;">
+            <!-- Ancho ajustado a 65% para evitar que se superponga con las flores laterales -->
+            <div class="carrusel-contenedor" style="top: 80%; left: 50%; width: 65%;">
                 <!-- Reemplaza el src con la ruta de tus fotos reales -->
                 <img src="foto1.jpg"  class="carrusel-item">
                 <img src="foto2.jpg"  class="carrusel-item">
@@ -255,9 +305,9 @@
                 Confirmar Asistencia
             </a>
 
-            <!-- Botón Subir Fotos (debajo de "en la fiesta aquí") -->
+            <!-- Botón Subir Fotos (Ajustado a top 89% para mayor separación) -->
             <a href="https://forms.google.com/..." id="btn-fotos" target="_blank" class="boton-interactivo" 
-               style="top: 86%; left: 50%; width: 70%;">
+               style="top: 89%; left: 50%; width: 70%;">
                 Subir Fotos
             </a>
         </div>
@@ -278,6 +328,12 @@
             <img src="imagen6.png" alt="Cierre de Invitación">
         </div>
 
+    </div>
+
+    <!-- ESTRUCTURA DEL VISOR DE FOTOS (LIGHTBOX) -->
+    <div id="lightbox" class="lightbox">
+        <span class="lightbox-cerrar" id="lightbox-cerrar">&times;</span>
+        <img id="lightbox-img" src="" alt="Foto ampliada">
     </div>
 
     <!-- ==========================================
@@ -335,6 +391,52 @@
             } else {
                 audio.pause();
                 btnMusica.classList.add("pausado");
+            }
+        });
+
+        /* --- 3. FUNCIONALIDAD DEL VISOR DE FOTOS (LIGHTBOX) --- */
+        const carruselItems = document.querySelectorAll('.carrusel-item');
+        const lightbox = document.getElementById('lightbox');
+        const lightboxImg = document.getElementById('lightbox-img');
+        const btnCerrarLightbox = document.getElementById('lightbox-cerrar');
+
+        // Abrir foto
+        carruselItems.forEach(img => {
+            img.addEventListener('click', () => {
+                lightboxImg.src = img.src;
+                lightbox.classList.add('activo');
+                // Manipular el historial para que el botón "Atrás" no cierre la página
+                history.pushState({ lightboxAbierto: true }, "", "#foto");
+            });
+        });
+
+        // Función para cerrar
+        function cerrarLightbox() {
+            lightbox.classList.remove('activo');
+        }
+
+        // Botón "X" para cerrar
+        btnCerrarLightbox.addEventListener('click', () => {
+            cerrarLightbox();
+            if (window.location.hash === '#foto') {
+                history.back(); // Elimina el #foto de la URL sin recargar
+            }
+        });
+
+        // Cerrar si se hace clic en el fondo oscuro
+        lightbox.addEventListener('click', (e) => {
+            if (e.target === lightbox) {
+                cerrarLightbox();
+                if (window.location.hash === '#foto') {
+                    history.back();
+                }
+            }
+        });
+
+        // Detectar si el usuario presionó el botón "Atrás" del celular/navegador
+        window.addEventListener('popstate', (e) => {
+            if (window.location.hash !== '#foto') {
+                cerrarLightbox();
             }
         });
     </script>
